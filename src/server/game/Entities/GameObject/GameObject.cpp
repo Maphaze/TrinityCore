@@ -2195,6 +2195,13 @@ void GameObject::SetDestructibleState(GameObjectDestructibleState state, WorldOb
             if (attackerOrHealer && attackerOrHealer->GetTypeId() == TYPEID_PLAYER)
                 if (Battleground* bg = attackerOrHealer->ToPlayer()->GetBattleground())
                     bg->DestroyGate(attackerOrHealer->ToPlayer(), this);
+            // Fix for https://github.com/TrinityCore/TrinityCore/issues/22138
+            // When player is in a siege machine, the attackerOrHealer->GetTypeId() is equal to TYPEID_UNIT. The first if statement at line 2196 (above) is not executed.
+            // So, the bg->DestroyGate, at line 2198, isn't called
+            if (attackerOrHealer && attackerOrHealer->GetTypeId() == TYPEID_UNIT)
+                if (attackerOrHealer->ToUnit()->IsControlledByPlayer())
+                    if (Battleground* bg = attackerOrHealer->ToUnit()->GetPlayerMovingMe()->GetBattleground())
+                        bg->DestroyGate(attackerOrHealer->ToUnit()->GetPlayerMovingMe(), this);
 
             RemoveFlag(GAMEOBJECT_FLAGS, GO_FLAG_DAMAGED);
             SetFlag(GAMEOBJECT_FLAGS, GO_FLAG_DESTROYED);
